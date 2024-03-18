@@ -62,7 +62,7 @@ app.get("/FindByTitle/:title", async (req,res) => {
     const title = req.params.title
     const finalSentence = title.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-    const movie = await MovieModel.find({title: finalSentence}).explain()
+    const movie = await MovieModel.find({title: finalSentence})
 
     res.json(movie)
     
@@ -160,7 +160,7 @@ app.get("/Search/:title", async (req,res) => {
     const title = req.params.title
     const regex = new RegExp(title, 'i')
 
-    let movies = await MovieModel.find({title: regex}).limit(20).explain()
+    let movies = await MovieModel.find({title: regex}).limit(20)
     res.json(movies)
   } catch (error) {
     res.status(200).json({message: error.message})
