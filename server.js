@@ -73,6 +73,64 @@ app.get("/FindByTitle/:title", async (req,res) => {
 
 //////////////////////////////////////////////////////////
 
+app.get("/Filter/", async (req,res) => {
+
+  try { 
+    const {MinRating,MaxRating, Genres, Runtime, SpokenLanguages,ImdbID} = req.query
+    let Limit = req.query.Limit
+
+    let IsAdult = req.query.IsAdult
+
+
+
+    let MinYear = req.query.MinYear
+    MinYear = `1-1-${MinYear}`
+
+    let MaxYear = req.query.MaxYear
+    MaxYear = `1-1-${MaxYear}`
+
+
+    MinYear = new Date(req.query.MinYear)
+    MaxYear = new Date(req.query.MaxYear)
+
+
+    if (Limit && !isNaN(Limit)) {
+      Limit = parseInt(Limit);
+    } else {
+        Limit = 100;
+    }
+    
+
+    let mongooseQuery = MovieModel.find().limit(Limit);
+
+    if(MinRating && MaxRating){
+      mongooseQuery = mongooseQuery.where({ "vote_average": {$gte: MinRating, $lte: MaxRating} })
+    } 
+
+    if(MinYear && MaxYear){
+      mongooseQuery = mongooseQuery.where({"release_date" : {$gte: MinYear, $lte: MaxYear}})
+    }
+
+    if(IsAdult === "false"){
+      mongooseQuery = mongooseQuery.where({"adult" : false})
+    }
+    else if(IsAdult === "true"){
+      mongooseQuery = mongooseQuery.where({"adult" : true})
+    }
+
+
+
+    let movies = await mongooseQuery.exec()
+
+    res.json(movies)
+    
+  } catch (error) {
+      res.status(200).json({message: error.message})
+  }
+})
+
+//////////////////////////////////////////////////////////
+
 
 
 app.listen(port, () => console.log(`started server on port ${port}`));
