@@ -62,7 +62,7 @@ app.get("/FindByTitle/:title", async (req,res) => {
     const title = req.params.title
     const finalSentence = title.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-    const movie = await MovieModel.find({title: finalSentence})
+    const movie = await MovieModel.find({title: finalSentence}).explain()
 
     res.json(movie)
     
@@ -76,12 +76,10 @@ app.get("/FindByTitle/:title", async (req,res) => {
 app.get("/Filter/", async (req,res) => {
 
   try { 
-    const {MinRating,MaxRating, Genres, Runtime, SpokenLanguages,ImdbID} = req.query
+    const {MinRating,MaxRating, Genre, MinRuntime, MaxRuntime, OriginalLanguage,SpokenLanguage} = req.query
     let Limit = req.query.Limit
-
+    
     let IsAdult = req.query.IsAdult
-
-
 
     let MinYear = req.query.MinYear
     MinYear = `1-1-${MinYear}`
@@ -89,6 +87,11 @@ app.get("/Filter/", async (req,res) => {
     let MaxYear = req.query.MaxYear
     MaxYear = `1-1-${MaxYear}`
 
+    let MinRevenue = req.query.MinRevenue
+    MinRevenue = new Number(MinRevenue)
+
+    let MaxRevenue = req.query.MaxRevenue
+    MaxRevenue = new Number(MaxRevenue)
 
     MinYear = new Date(req.query.MinYear)
     MaxYear = new Date(req.query.MaxYear)
@@ -97,7 +100,7 @@ app.get("/Filter/", async (req,res) => {
     if (Limit && !isNaN(Limit)) {
       Limit = parseInt(Limit);
     } else {
-        Limit = 100;
+        Limit = 30;
     }
     
 
@@ -111,16 +114,36 @@ app.get("/Filter/", async (req,res) => {
       mongooseQuery = mongooseQuery.where({"release_date" : {$gte: MinYear, $lte: MaxYear}})
     }
 
-    if(IsAdult === "false"){
-      mongooseQuery = mongooseQuery.where({"adult" : false})
-    }
-    else if(IsAdult === "true"){
-      mongooseQuery = mongooseQuery.where({"adult" : true})
-    }
+  if (Genre) {
+      const regex = new RegExp(Genre, 'i');
+      mongooseQuery = mongooseQuery.where({ genres: regex });
+  }
+
+  if(IsAdult === "false" || IsAdult === "true"){
+      mongooseQuery = IsAdult == "false" ? mongooseQuery.where({"adult" : false}) : mongooseQuery.where({"adult" : true })
+  }
 
 
+  if(MaxRuntime && MinRuntime){
+    mongooseQuery = mongooseQuery.where({runtime: {$gte:MinRuntime, $lte:MaxRuntime}})
+  }
 
-    let movies = await mongooseQuery.exec()
+  if(MinRevenue && MaxRevenue){
+    mongooseQuery = mongooseQuery.where({revenue: {$gte:MinRevenue, $lte:MaxRevenue}})
+  }
+
+  if (SpokenLanguage) {
+    const regex = new RegExp(SpokenLanguage, 'i');
+    mongooseQuery = mongooseQuery.where({ "spoken_languages" : regex });
+  }
+
+  if (OriginalLanguage) {
+    const regex = new RegExp(OriginalLanguage, 'i');
+    mongooseQuery = mongooseQuery.where({ "original_language" : regex });
+  }
+
+  let movies = await mongooseQuery.exec()
+    
 
     res.json(movies)
     
@@ -129,7 +152,22 @@ app.get("/Filter/", async (req,res) => {
   }
 })
 
+
 //////////////////////////////////////////////////////////
+
+app.get("/Search/:title", async (req,res) => {
+  try {
+    const title = req.params.title
+    const regex = new RegExp(title, 'i')
+
+    let movies = await MovieModel.find({title: regex}).limit(20).explain()
+    res.json(movies)
+  } catch (error) {
+    res.status(200).json({message: error.message})
+  }
+})
+
+
 
 
 
