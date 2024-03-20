@@ -74,7 +74,7 @@ app.get("/FindByTitle/:title", async (req, res) => {
 
 app.get("/Filter/", async (req, res) => {
   try {
-    const {
+    let {
       MinRating,
       MaxRating,
       MinYear,
@@ -169,7 +169,9 @@ app.get("/Search/:title", async (req, res) => {
     const title = req.params.title;
     const regex = new RegExp(title, "i");
 
-    let movies = await MovieModel.find({ title: regex }).limit(20);
+    let movies = await MovieModel.find({ title: regex })
+      .limit(20)
+      .sort({ revenue: -1 });
     res.json(movies);
   } catch (error) {
     res.status(200).json({ message: error.message });
