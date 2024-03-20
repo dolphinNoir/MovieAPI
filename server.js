@@ -32,6 +32,12 @@ app.get("/Random/:limit", async (req, res) => {
   const limit = req.params.limit;
   try {
     const RandomMovies = await MovieModel.aggregate([
+      {
+        $match: {
+          revenue: { $gt: 300000 },
+          original_language: "en",
+        },
+      },
       { $sample: { size: Number(limit) } },
     ]);
     res.json(RandomMovies);
