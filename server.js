@@ -80,22 +80,39 @@ app.get("/FindByTitle/:title", async (req, res) => {
 
 app.get("/Filter/", async (req, res) => {
   try {
-    let {
-      MinRating,
-      MaxRating,
-      MinRevenue,
-      MaxRevenue,
-      Genre,
-      MinRuntime,
-      MaxRuntime,
-      OriginalLanguage,
-      SpokenLanguage,
-    } = req.query;
+    let { Genre } = req.query;
     let Limit = req.query.Limit;
 
-    let MinYear = req.query.MinYear ? new Date(`1-1-${req.query.MinYear}`) : new Date(`1-1-1971`);
-    let MaxYear = req.query.MaxYear ? new Date(`1-1-${req.query.MaxYear}`) : new Date(`1-1-2024`);
+    let MinRating = req.query.MinRating ? new Number(req.query.MinRating) : 4;
+    let MaxRating = req.query.MaxRating ? new Number(req.query.MaxRating) : 10;
 
+    let MinRevenue = req.query.MinRevenue
+      ? new Number(req.query.MinRevenue)
+      : 100000;
+    let MaxRevenue = req.query.MaxRevenue
+      ? new Number(req.query.MaxRevenue)
+      : 10000000000;
+
+    let MinYear = req.query.MinYear
+      ? new Date(`1-1-${req.query.MinYear}`)
+      : new Date(`1-1-1971`);
+    let MaxYear = req.query.MaxYear
+      ? new Date(`1-1-${req.query.MaxYear}`)
+      : new Date(`1-1-2024`);
+
+    let MinRuntime = req.query.MinRuntime
+      ? new Number(req.query.MinRuntime)
+      : 20;
+    let MaxRuntime = req.query.MaxRuntime
+      ? new Number(req.query.MaxRuntime)
+      : 300;
+
+    let OriginalLanguage = req.query.OriginalLanguage
+      ? req.query.OriginalLanguage
+      : "en";
+    let SpokenLanguage = req.query.SpokenLanguage
+      ? req.query.SpokenLanguage
+      : "english";
 
     let IsAdult = req.query.IsAdult;
 
@@ -110,8 +127,8 @@ app.get("/Filter/", async (req, res) => {
     if (MinRating || MaxRating) {
       mongooseQuery = mongooseQuery.where({
         vote_average: {
-          $gte: !isNaN(MinRating) ? MinRating : 1920,
-          $lte: !isNaN(MaxRating) != NaN() ? MaxRating : 2024,
+          $gte: MinRating,
+          $lte: MaxRating,
         },
       });
     }
@@ -137,7 +154,7 @@ app.get("/Filter/", async (req, res) => {
           : mongooseQuery.where({ adult: true });
     }
 
-    if (MaxRuntime && MinRuntime) {
+    if (MaxRuntime || MinRuntime) {
       mongooseQuery = mongooseQuery.where({
         runtime: { $gte: MinRuntime, $lte: MaxRuntime },
       });
