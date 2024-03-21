@@ -83,8 +83,6 @@ app.get("/Filter/", async (req, res) => {
     let {
       MinRating,
       MaxRating,
-      MinYear,
-      MaxYear,
       MinRevenue,
       MaxRevenue,
       Genre,
@@ -94,6 +92,10 @@ app.get("/Filter/", async (req, res) => {
       SpokenLanguage,
     } = req.query;
     let Limit = req.query.Limit;
+
+    let MinYear = req.query.MinYear ? new Date(`1-1-${req.query.MinYear}`) : new Date(`1-1-1971`);
+    let MaxYear = req.query.MaxYear ? new Date(`1-1-${req.query.MaxYear}`) : new Date(`1-1-2024`);
+
 
     let IsAdult = req.query.IsAdult;
 
@@ -105,21 +107,21 @@ app.get("/Filter/", async (req, res) => {
 
     let mongooseQuery = MovieModel.find().limit(Limit);
 
-    if (MinRating && MaxRating) {
+    if (MinRating || MaxRating) {
       mongooseQuery = mongooseQuery.where({
-        vote_average: { $gte: MinRating, $lte: MaxRating },
+        vote_average: {
+          $gte: !isNaN(MinRating) ? MinRating : 1920,
+          $lte: !isNaN(MaxRating) != NaN() ? MaxRating : 2024,
+        },
       });
     }
 
-    if (MinYear && MaxYear) {
-      MinYear = `1-1-${MinYear}`;
-      MaxYear = `1-1-${MaxYear}`;
-
-      MinYear = new Date(req.query.MinYear);
-      MaxYear = new Date(req.query.MaxYear);
-
+    if (MinYear || MaxYear) {
       mongooseQuery = mongooseQuery.where({
-        release_date: { $gte: MinYear, $lte: MaxYear },
+        release_date: {
+          $gte: MinYear,
+          $lte: MaxYear,
+        },
       });
     }
 
